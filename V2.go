@@ -51,7 +51,7 @@ type Philosopher struct {
 func (p *Philosopher) dine(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 20; i++ {
 		// Think
 		p.think()
 
@@ -110,8 +110,7 @@ func main() {
 		forks[i] = &Fork{id: i}
 	}
 
-	// Create waiter that allows 4 philosophers at a time
-	// This is key: 4 philosophers competing for 5 forks = no deadlock!
+	// Create waiter that allows 4 philosophers at a time (N-1)
 	waiter := NewWaiter(4)
 
 	// Create 5 philosophers
@@ -122,8 +121,8 @@ func main() {
 			leftFork:  forks[i],
 			rightFork: forks[(i+1)%5],
 			waiter:    waiter,
-			thinkTime: time.Duration(100+i*20) * time.Millisecond,
-			eatTime:   time.Duration(150+i*10) * time.Millisecond,
+			thinkTime:  100 * time.Millisecond,
+			eatTime:    200 * time.Millisecond,
 		}
 	}
 
@@ -158,7 +157,7 @@ func main() {
 		fmt.Printf("  Total: %d meals\n", totalMeals)
 		fmt.Println("\n✓ No deadlock! The waiter solution works!")
 
-	case <-time.After(10 * time.Second):
+	case <-time.After(30 * time.Second);
 		fmt.Println("\n✗ Timeout! Something went wrong.")
 	}
 }

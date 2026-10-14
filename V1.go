@@ -24,7 +24,7 @@ type Philosopher struct {
 func (p *Philosopher) dine(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 20; i++ {
 		// Think for a bit
 		p.think()
 
@@ -51,7 +51,7 @@ func (p *Philosopher) dine(wg *sync.WaitGroup) {
 
 func (p *Philosopher) think() {
 	fmt.Printf("Philosopher %d is thinking...\n", p.id)
-	time.Sleep(time.Duration(100+p.id*10) * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 }
 
 func (p *Philosopher) eat() {
@@ -104,8 +104,8 @@ func main() {
 			fmt.Printf("  Philosopher %d ate %d times\n", i, p.eatenCount)
 		}
 		elapsed := time.Since(start)
-		fmt.Printf("\nSequential Dinner took %s\n\n", elapsed)
-	case <-time.After(10 * time.Second):
+		fmt.Printf("\nDinner took %s\n\n", elapsed)
+	case <-time.After(15 * time.Second):
 		fmt.Println("\n✗ DEADLOCK DETECTED!")
 		fmt.Println("All philosophers are waiting for forks.")
 		fmt.Println("This is the classic deadlock scenario.")

@@ -41,7 +41,7 @@ func NewPhilosopher(id int, forks []*Fork, numPhilosophers int) *Philosopher {
 func (p *Philosopher) dine(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 20; i++ {
 		p.think()
 		p.pickUpForks()
 		p.eat()
@@ -51,7 +51,7 @@ func (p *Philosopher) dine(wg *sync.WaitGroup) {
 
 func (p *Philosopher) think() {
 	fmt.Printf("Philosopher %d is thinking...\n", p.id)
-	time.Sleep(time.Duration(100+p.id*10) * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 }
 
 func (p *Philosopher) pickUpForks() {
@@ -154,7 +154,7 @@ func main() {
 		fmt.Printf("  Total: %d meals\n", totalMeals)
 		fmt.Println("\n✓ No deadlock! Asymmetric solution works!")
 
-	case <-time.After(10 * time.Second):
+	case <-time.After(30 * time.Second):
 		fmt.Println("\n✗ Timeout! Unexpected deadlock occurred.")
 	}
 }
