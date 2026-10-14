@@ -33,7 +33,7 @@ func (p *Philosopher) dine(wg *sync.WaitGroup) {
 		fmt.Printf("Philosopher %d picked up left fork %d\n", p.id, p.leftFork.id)
 
 		// Small delay to increase chance of deadlock
-		time.Sleep(25 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 
 		// Pick up right fork
 		p.rightFork.Lock()
@@ -105,7 +105,7 @@ func main() {
 		}
 		elapsed := time.Since(start)
 		fmt.Printf("\nSequential Dinner took %s\n\n", elapsed)
-	case <-time.After(15 * time.Second):
+	case <-time.After(10 * time.Second):
 		fmt.Println("\n✗ DEADLOCK DETECTED!")
 		fmt.Println("All philosophers are waiting for forks.")
 		fmt.Println("This is the classic deadlock scenario.")

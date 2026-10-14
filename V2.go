@@ -112,7 +112,7 @@ func main() {
 
 	// Create waiter that allows 4 philosophers at a time
 	// This is key: 4 philosophers competing for 5 forks = no deadlock!
-	waiter := NewWaiter(5)
+	waiter := NewWaiter(4)
 
 	// Create 5 philosophers
 	philosophers := make([]*Philosopher, 5)
