@@ -43,7 +43,9 @@ func (p *Philosopher) dine(wg *sync.WaitGroup) {
 
 	for i := 0; i < 20; i++ {
 		p.think()
+		waitStart := time.Now() 
 		p.pickUpForks()
+		metrics.addWait(time.Since(waitStart)) 
 		p.eat()
 		p.putDownForks()
 	}
@@ -77,7 +79,9 @@ func (p *Philosopher) pickUpForks() {
 func (p *Philosopher) eat() {
 	fmt.Printf("Philosopher %d is eating (meal %d)\n", p.id, p.eatenCount+1)
 	p.eatenCount++
+	metrics.startEating() 
 	time.Sleep(200 * time.Millisecond)
+	metrics.stopEating() 
 }
 
 func (p *Philosopher) putDownForks() {
@@ -140,6 +144,7 @@ func main() {
 		elapsed := time.Since(startTime)
 		fmt.Println("\n✓ All philosophers finished dining!")
 		fmt.Printf("Total time: %v\n\n", elapsed)
+		metrics.report("V3", elapsed, philosophers) 
 
 		fmt.Println("Meal counts:")
 		totalMeals := 0
@@ -154,7 +159,68 @@ func main() {
 		fmt.Printf("  Total: %d meals\n", totalMeals)
 		fmt.Println("\n✓ No deadlock! Asymmetric solution works!")
 
-	case <-time.After(30 * time.Second):
+	case <-time.After(10 * time.Minute): // ALTERADO: 30s podia estourar com tempos maiores
 		fmt.Println("\n✗ Timeout! Unexpected deadlock occurred.")
 	}
+}
+
+
+type Metrics struct {
+	mu        sync.Mutex
+	totalWait time.Duration // soma de todas as esperas
+	maxWait   time.Duration // maior espera individual
+	waits     int           // quantas esperas foram medidas (= refeições)
+	eatingNow int           // quantos comem agora
+	maxEating int           // máximo de filósofos comendo ao mesmo tempo
+}
+
+var metrics Metrics
+
+// addWait registra quanto tempo um filósofo esperou para conseguir comer.
+func (m *Metrics) addWait(d time.Duration) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.totalWait += d
+	m.waits++
+	if d > m.maxWait {
+		m.maxWait = d
+	}
+}
+
+func (m *Metrics) startEating() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.eatingNow++
+	if m.eatingNow > m.maxEating {
+		m.maxEating = m.eatingNow
+	}
+}
+
+func (m *Metrics) stopEating() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.eatingNow--
+}
+
+func (m *Metrics) report(name string, total time.Duration, philosophers []*Philosopher) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	avg := time.Duration(0)
+	if m.waits > 0 {
+		avg = m.totalWait / time.Duration(m.waits)
+	}
+
+	fmt.Println("\n===== MÉTRICAS", name, "=====")
+	fmt.Println("Tempo total de execução:         ", total)
+	fmt.Println("Tempo médio de espera (garfos):  ", avg)
+	fmt.Println("Maior tempo de espera:           ", m.maxWait)
+	fmt.Println("Máx. filósofos comendo juntos:   ", m.maxEating)
+	fmt.Print("Ciclos concluídos por filósofo:   ")
+	for _, p := range philosophers {
+		fmt.Printf("%d ", p.eatenCount)
+	}
+	fmt.Println()
+	// linha pronta para copiar na planilha: versão;total(s);média(s);máx(s);máx comendo
+	fmt.Printf("CSV;%s;%.3f;%.3f;%.3f;%d\n", name, total.Seconds(), avg.Seconds(), m.maxWait.Seconds(), m.maxEating)
 }
