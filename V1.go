@@ -19,14 +19,13 @@ type Philosopher struct {
 	id                  int
 	leftFork, rightFork *Fork
 	eatenCount          int
-	state               atomic.Int32 
+	state               atomic.Int32
 }
 
 // dine simulates a philosopher's behavior
 // This implementation WILL DEADLOCK!
 func (p *Philosopher) dine(wg *sync.WaitGroup) {
 	defer wg.Done()
-
 
 	time.Sleep(time.Duration(rand.Int63n(int64(startJitter))))
 
@@ -35,7 +34,7 @@ func (p *Philosopher) dine(wg *sync.WaitGroup) {
 		p.state.Store(stateThinking)
 		p.think()
 
-		waitStart := time.Now() 
+		waitStart := time.Now()
 
 		// Pick up left fork first
 		p.leftFork.Lock()
@@ -43,7 +42,7 @@ func (p *Philosopher) dine(wg *sync.WaitGroup) {
 		fmt.Printf("Philosopher %d picked up left fork %d\n", p.id, p.leftFork.id)
 
 		// Small delay to increase chance of deadlock
-		time.Sleep(11 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 
 		// Pick up right fork
 		p.rightFork.Lock()
@@ -69,9 +68,9 @@ func (p *Philosopher) think() {
 func (p *Philosopher) eat() {
 	fmt.Printf("Philosopher %d is eating (meal %d)\n", p.id, p.eatenCount+1)
 	p.eatenCount++
-	metrics.startEating() 
+	metrics.startEating()
 	time.Sleep(200 * time.Millisecond)
-	metrics.stopEating() 
+	metrics.stopEating()
 }
 
 func main() {
@@ -119,13 +118,12 @@ func main() {
 		}
 		elapsed := time.Since(start)
 		fmt.Printf("\nDinner took %s\n\n", elapsed)
-		metrics.report("V1", elapsed, philosophers) 
-	case <-time.After(15 * time.Second):
+		metrics.report("V1", elapsed, philosophers)
+	case <-time.After(30 * time.Second):
 		fmt.Println("\n✗ DEADLOCK DETECTED!")
 		fmt.Println("All philosophers are waiting for forks.")
 		fmt.Println("This is the classic deadlock scenario.")
 
-		
 		fmt.Println("\nEstado de cada filósofo no momento do deadlock:")
 		for i, p := range philosophers {
 			right := (i + 1) % 5
@@ -152,18 +150,16 @@ const (
 	stateEating
 )
 
-
 type Metrics struct {
 	mu        sync.Mutex
-	totalWait time.Duration 
-	maxWait   time.Duration 
-	waits     int           
-	eatingNow int           
-	maxEating int           
+	totalWait time.Duration
+	maxWait   time.Duration
+	waits     int
+	eatingNow int
+	maxEating int
 }
 
 var metrics Metrics
-
 
 func (m *Metrics) addWait(d time.Duration) {
 	m.mu.Lock()
@@ -212,5 +208,4 @@ func (m *Metrics) report(name string, total time.Duration, philosophers []*Philo
 	fmt.Printf("CSV;%s;%.3f;%.3f;%.3f;%d\n", name, total.Seconds(), avg.Seconds(), m.maxWait.Seconds(), m.maxEating)
 }
 
-
-const startJitter = 50 * time.Millisecond
+const startJitter = 25 * time.Millisecond
